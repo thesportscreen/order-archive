@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="shopify-api-key" content="4de39bf555f8f3b7ab8fff1f2eb2695c">
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+<title>Order Archive</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Shopify-admin style page — title bar, filter card, then one white card holding the order index; rows expand inline into detail cards. */
+:root{
+  --p-warn:#FFD6A4; --p-warn-fg:#5E4200; --p-bad:#FEDAD9; --p-bad-fg:#8E0B21;
+  --bg:#F1F1F1; --card:#FFFFFF; --sunk:#F7F7F7; --line:#E3E3E3; --hover:#FAFAFA;
+  --fg:#303030; --muted:#616161; --subtle:#8A8A8A;
+  --ink:#303030; --accent:#BE1F2D;
+  --p-web:#D5EBFF; --p-web-fg:#003A5A; --p-whl:#CDFEE1; --p-whl-fg:#0C5132; --p-man:#E3E3E3; --p-man-fg:#4A4A4A;
+  --p-hl:#FFF1B8;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --shadow:0 1px 0 rgba(26,26,26,.07),0 0 0 1px rgba(26,26,26,.06);
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color-scheme:light}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:13px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:22px 4px}
+.ttl{display:flex;align-items:center;gap:10px}
+.logo{width:32px;height:32px;border-radius:8px;background:var(--ink);display:grid;place-items:center}
+.logo svg{width:18px;height:18px;stroke:var(--bg)}
+h1{font-size:20px;font-weight:700;margin:0;color:var(--ink);letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:12px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:var(--card);box-shadow:var(--shadow);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--muted)}
+.stat b{color:var(--ink);font-variant-numeric:tabular-nums;margin-right:4px}
+.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding:10px;display:grid;grid-template-columns:1fr auto auto auto;gap:8px;border-radius:12px}
+.bar>*{min-width:0}
+.search{position:relative}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--subtle)}
+input,select,button{font:inherit;color:var(--fg)}
+#q{width:100%;background:var(--card);border:1px solid var(--line);padding:8px 32px 8px 32px;font-size:14px;border-radius:8px;height:36px}
+#q:focus,select:focus,button:focus-visible{outline:2px solid #005BD3;outline-offset:1px}
+#clear{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--subtle);font-size:18px;cursor:pointer;padding:2px 8px}
+select{width:100%;background:var(--card);border:1px solid var(--line);padding:0 28px 0 10px;height:36px;border-radius:8px;font-size:13px}
+.meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--line)}
+.meta strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--sunk);border:1px solid var(--line);color:var(--fg);padding:2px 4px 2px 10px;font-size:12px;border-radius:999px}
+.chip button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:0 5px;border-radius:999px}
+.hdr,.row{display:grid;grid-template-columns:24px 96px 118px minmax(0,1.5fr) minmax(0,1.1fr) 104px 52px 96px;gap:12px;align-items:center;padding:0 14px}
+.hdr{font-size:12px;font-weight:600;color:var(--muted);padding-block:8px;background:var(--sunk);border-bottom:1px solid var(--line)}
+.hdr .r,.row .r{text-align:right}
+.order{border-bottom:1px solid var(--line)}
+.order:last-child{border-bottom:0}
+.row{width:100%;background:none;border:0;text-align:left;cursor:pointer;padding-block:10px;font-variant-numeric:tabular-nums}
+.row:hover{background:var(--hover)}
+.order.open>.row{background:var(--sunk)}
+.chev{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;transition:transform .15s,background .15s}
+.chev svg{width:12px;height:12px;stroke:var(--muted)}
+.row:hover .chev{background:var(--line)}
+.order.open .chev{transform:rotate(90deg)}
+.num{font-weight:650;color:var(--ink)}
+.cust{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.loc,.dt{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:550;padding:2px 9px;border-radius:999px;white-space:nowrap;justify-self:start;line-height:18px}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+.s0{background:var(--p-web);color:var(--p-web-fg)}
+.s1{background:var(--p-whl);color:var(--p-whl-fg)}
+.s2{background:var(--p-man);color:var(--p-man-fg)}
+.ok{background:var(--p-whl);color:var(--p-whl-fg)} .info{background:var(--p-web);color:var(--p-web-fg)} .warn{background:var(--p-warn);color:var(--p-warn-fg)} .bad{background:var(--p-bad);color:var(--p-bad-fg)}
+.sel{user-select:all;overflow-wrap:anywhere}
+.cnt{color:var(--muted)}
+.amt{font-weight:550;color:var(--ink)}
+mark{background:var(--p-hl);color:inherit;border-radius:3px;padding:0 1px}
+.detail{background:var(--sunk);padding:4px 14px 16px 50px;display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:12px}
+.dcard{background:var(--card);border-radius:10px;box-shadow:var(--shadow);padding:12px 14px;min-width:0}
+.dcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.lbl{font-size:12px;font-weight:650;color:var(--ink);margin:0 0 8px}
+.addr{line-height:1.55;color:var(--fg)}
+.addr .nm{font-weight:600;color:var(--ink)}
+.cust-btn{margin-top:4px;background:var(--card);border:1px solid var(--line);box-shadow:0 1px 0 var(--line);padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;border-radius:8px;width:100%}
+.cust-btn:hover{background:var(--hover)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.r,th.r{text-align:right}
+td.sku code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap;color:var(--fg)}
+.opt{color:var(--muted);font-size:12px;margin-top:2px}
+tr.disc td{color:var(--muted);font-style:italic}
+tfoot td{border-bottom:0;font-weight:650;color:var(--ink)}
+.note{background:var(--sunk);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{padding:40px 14px;color:var(--muted);text-align:center}
+.more{align-self:center;background:var(--ink);border:0;color:var(--bg);font-weight:600;padding:8px 18px;cursor:pointer;border-radius:8px;font-size:13px}
+.foot{color:var(--subtle);font-size:12px;text-align:center;margin:0}
+.m-only{display:none}
+@media (max-width:860px){
+  .hdr{display:none}
+  .bar{grid-template-columns:1fr 1fr 1fr}
+  .search{grid-column:1/-1}
+  .row{grid-template-columns:24px minmax(0,1fr) auto;grid-template-areas:"c n a" "c u s" "c l l";row-gap:3px}
+  .row>.chev{grid-area:c;align-self:start}
+  .row>.num{grid-area:n}
+  .row>.amt{grid-area:a}
+  .row>.cust{grid-area:u}
+  .row>.pill{grid-area:s;justify-self:end}
+  .row>.loc{grid-area:l}
+  .row>.dt,.row>.cnt{display:none}
+  .m-only{display:inline}
+  .detail{grid-template-columns:1fr;padding:2px 10px 14px}
+}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+
+.hdr-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--card);border:1px solid var(--line);box-shadow:0 1px 0 var(--line);padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;border-radius:8px;color:var(--ink)}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.panel{padding:20px;display:flex;flex-direction:column;gap:12px;max-width:640px}
+.panel h2{font-size:15px;margin:0;color:var(--ink)}
+.panel p{margin:0;color:var(--muted)}
+#status{flex-direction:row;align-items:center}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--ink);animation:sp 0.8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.file{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;color:var(--ink);font-weight:600}
+.file input{position:absolute;opacity:0;width:1px;height:1px}
+.track{height:8px;background:var(--sunk);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.fill{height:100%;width:0;background:var(--ink);transition:width .2s}
+.row-actions{display:flex;gap:8px}
+.err{color:var(--p-bad-fg)!important;background:var(--p-bad);padding:8px 10px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="gate">
+  <header class="top"><div class="ttl"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 7h16M4 7v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7M4 7l2-3h12l2 3M10 11h4"/></svg></div><div><h1>Order Archive</h1><div class="sub">The SportScreen · ShipStation &amp; OrderSpace order history</div></div></div></header>
+  <div class="card panel" id="status"><div class="spin"></div><p id="statusText">Loading orders from Shopify…</p></div>
+  <div class="card panel" id="importer" hidden>
+    <h2>Load the order history</h2>
+    <p>Choose the <b>order-archive-data.json</b> file. Orders are saved privately inside your Shopify store, in data only this app can change. Nothing is shown on your online store.</p>
+    <label class="file"><input type="file" id="file" accept=".json,application/json"><span id="fileLabel">Choose file</span></label>
+    <div class="prog" id="prog" hidden><div class="track"><div class="fill" id="fill"></div></div><p id="progText"></p></div>
+    <div class="row-actions"><button class="btn primary" id="doImport" disabled>Import orders</button><button class="btn" id="cancelImport" hidden>Cancel</button></div>
+    <p class="err" id="err" hidden></p>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="ttl">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 7h16M4 7v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7M4 7l2-3h12l2 3M10 11h4"/></svg></div>
+      <div><h1>Order Archive</h1><div class="sub">The SportScreen · ShipStation &amp; OrderSpace order history</div></div>
+    </div>
+    <div class="hdr-r"><div class="stats" id="stats"></div><button class="btn" id="manage">Update data</button></div>
+  </header>
+
+  <div class="card bar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search name, company, email, phone, order #, PO, address, SKU, tracking" autocomplete="off" aria-label="Search orders">
+      <button id="clear" aria-label="Clear search" hidden>×</button>
+    </div>
+    <select id="store" aria-label="Store">
+      <option value="">All stores</option>
+      <option value="0">Website (ShipStation)</option>
+      <option value="1">Wholesale (OrderSpace)</option>
+      <option value="2">Manual (ShipStation)</option>
+    </select>
+    <select id="year" aria-label="Year"><option value="">All years</option></select>
+    <select id="sort" aria-label="Sort">
+      <option value="new">Newest first</option>
+      <option value="old">Oldest first</option>
+      <option value="hi">Highest total</option>
+      <option value="lo">Lowest total</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="meta"><div id="count"></div><div id="chips"></div></div>
+    <div class="hdr"><span></span><span>Order</span><span>Date paid</span><span>Customer</span><span>Ship to</span><span>Store</span><span class="r">Items</span><span class="r">Total</span></div>
+    <div id="list"></div>
+  </div>
+  <button class="more" id="more" hidden>Show more orders</button>
+  <p class="foot">Compiled from three ShipStation Order Detail exports (Nov 2015 – Apr 2025) and the OrderSpace wholesale export (Oct 2018 – Mar 2025). Wholesale orders that appear in both are shown once, using OrderSpace details plus ShipStation tracking notes. No Shopify orders are included. Stored privately in Shopify — staff only.</p>
+</div>
+
+
+<script>
+function start(raw){
+
+const STORES=["Website","Wholesale","Manual"];
+const STORE_FULL=["Website (WooCommerce) · via ShipStation","Wholesale · OrderSpace","Manual order · ShipStation"];
+const orders=raw.map((r,i)=>{
+  const addr=r.a||[]; const items=r.i||[];
+  const last=addr.length?addr[addr.length-1]:'';
+  const city=/^(Canada|United States|USA|US|CA)$/i.test(last)&&addr.length>1?addr[addr.length-2]:last;
+  const hay=[r.n,r.d,r.c,addr.join(' '),(r.b||[]).join(' '),r.bc,r.no,r.em,r.ph,r.po,r.inv,r.ref,r.st,r.src,items.map(it=>it[0]+' '+it[1]+' '+(it[5]||'')).join(' ')].filter(Boolean).join(' ').toLowerCase();
+  const nq=items.reduce((s,it)=>s+((it[0]==='total-discount'||(+it[4]<0))?0:(+it[3]||0)),0);
+  return {i,num:r.n,date:r.d,name:r.c||'',addr,city,paid:r.t,store:r.s,items,com:r.bc,notes:r.no,cur:r.cur,status:r.st,po:r.po,inv:r.inv,email:r.em,phone:r.ph,ship:r.ship,ref:r.ref,bill:r.b,tax:r.tax,src:r.src,hay,nq,yr:(r.d||'').slice(0,4)};
+});
+const $=id=>document.getElementById(id);
+const money=(v,c)=>v==null||v===''?'—':(v<0?'-$':'$')+Math.abs(+v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+(c?' '+c:'');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDate=d=>{if(!d)return '—';const [y,m,dd]=d.slice(0,10).split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+(+dd)+', '+y};
+const shortLoc=c=>c.replace(/\s+(US|CA)$/,'').replace(/\s+[A-Z0-9]{3}\s?[A-Z0-9]{3}$|\s+\d{5}(-\d{4})?$/,'');
+
+// stats
+const years=[...new Set(orders.map(o=>o.yr).filter(Boolean))].sort().reverse();
+years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;$('year').appendChild(o)});
+const custs=new Set(orders.map(o=>o.name.toLowerCase().trim()));
+$('stats').innerHTML=[[orders.length.toLocaleString(),'Orders'],[custs.size.toLocaleString(),'Customers'],[years[years.length-1]+'–'+years[0],'Years']].map(([v,l])=>`<span class="stat"><b>${v}</b>${l}</span>`).join('');
+
+let state={q:'',store:'',year:'',sort:'new',cust:null,shown:0,res:[]};
+const PAGE=150; const open=new Set();
+
+function hl(text,terms){
+  let s=esc(text); if(!terms.length) return s;
+  terms.forEach(t=>{ if(t.length<2) return; const re=new RegExp('('+esc(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'); s=s.replace(/(<[^>]*>)|([^<]+)/g,(m,tag,txt)=>tag?tag:txt.replace(re,'<mark>$1</mark>')); });
+  return s;
+}
+function terms(){return state.q.toLowerCase().split(/\s+/).filter(Boolean)}
+
+function filter(){
+  const t=terms();
+  let r=orders.filter(o=>(state.store===''||o.store==state.store)&&(state.year===''||o.yr===state.year)&&(!state.cust||o.name.toLowerCase().trim()===state.cust)&&t.every(x=>o.hay.includes(x)));
+  const s=state.sort;
+  if(s==='old') r=r.slice().reverse();
+  else if(s==='hi') r=r.slice().sort((a,b)=>(+b.paid||0)-(+a.paid||0));
+  else if(s==='lo') r=r.slice().sort((a,b)=>(+a.paid||0)-(+b.paid||0));
+  state.res=r; state.shown=0; $('list').innerHTML=''; renderMore();
+  const total=r.reduce((s,o)=>s+(+o.paid||0),0);
+  $('count').innerHTML=`<strong>${r.length.toLocaleString()}</strong> order${r.length===1?'':'s'}`;
+  $('chips').innerHTML=state.cust?`<span class="chip">Customer: ${esc(r[0]?r[0].name:state.cust)} <button id="xc" aria-label="Clear customer filter">×</button></span>`:'';
+  if(state.cust) $('xc').onclick=()=>{state.cust=null;filter()};
+  if(!r.length) $('list').innerHTML='<div class="empty">No orders match. Try fewer words, or a postal code, SKU or last name.</div>';
+}
+const ST={fulfilled:'ok',released:'info',cancelled:'bad',invoiced:'warn'};
+function statusPill(o){return o.status==='cancelled'?`<span class="pill bad">Cancelled</span>`:''}
+function rowHTML(o,t){
+  return `<div class="order${open.has(o.i)?' open':''}" data-i="${o.i}">
+  <button class="row" aria-expanded="${open.has(o.i)}">
+    <span class="chev"><svg viewBox="0 0 12 12" fill="none" stroke-width="2"><path d="m4 2 4 4-4 4"/></svg></span>
+    <span class="num">#${hl(o.num,t)}</span>
+    <span class="dt">${fmtDate(o.date)}</span>
+    <span class="cust">${hl(o.name,t)}</span>
+    <span class="loc"><span class="m-only">${fmtDate(o.date)} · </span>${hl(shortLoc(o.city),t)}</span>
+    ${statusPill(o)||`<span class="pill s${o.store}">${STORES[o.store]}</span>`}
+    <span class="cnt r">${o.nq||'—'}</span>
+    <span class="amt r">${money(o.paid,o.cur)}</span>
+  </button>${open.has(o.i)?detailHTML(o,t):''}</div>`;
+}
+function detailHTML(o,t){
+  const items=o.items.map(it=>{const disc=+it[4]<0||it[0]==='total-discount';return `<tr class="${disc?'disc':''}"><td class="sku">${it[0]?`<code>${hl(it[0],t)}</code>`:'—'}</td><td>${hl(it[1],t)}${it[5]?`<div class="opt">${hl(it[5],t)}</div>`:''}</td><td class="r">${money(it[2])}</td><td class="r">${it[3]??''}</td><td class="r">${money(it[4])}</td></tr>`}).join('');
+  const sub=o.items.reduce((s,it)=>s+(+it[4]||0),0);
+  const kv=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:'';
+  return `<div class="detail">
+   <div class="dcol">
+     <div class="dcard"><div class="lbl">Customer</div>
+       <div class="addr"><div class="nm">${hl(o.name,t)}</div></div>
+       ${o.email||o.phone?`<dl class="kv" style="margin-top:6px">${kv('Email',o.email?`<span class="sel">${hl(o.email,t)}</span>`:'')}${kv('Phone',o.phone?hl(o.phone,t):'')}</dl>`:''}
+       <button class="cust-btn" style="margin-top:10px" data-cust="${esc(o.name.toLowerCase().trim())}">View all orders from this customer</button></div>
+     <div class="dcard"><div class="lbl">Shipping address</div>
+       <div class="addr">${o.addr.map(a=>`<div>${hl(a,t)}</div>`).join('')||'—'}</div></div>
+     ${o.bill&&o.bill.length&&o.bill.join('|')!==o.addr.join('|')?`<div class="dcard"><div class="lbl">Billing address</div><div class="addr">${o.bill.map(a=>`<div>${hl(a,t)}</div>`).join('')}</div></div>`:''}
+     <div class="dcard"><div class="lbl">Order details</div>
+       <dl class="kv">${kv('Order','#'+esc(o.num))}${kv('Date',fmtDate(o.date)+(o.date&&o.date.length>10?' · '+o.date.slice(11):''))}${kv('Total',money(o.paid,o.cur))}${kv('Status',o.status?`<span class="pill ${ST[o.status]||'s2'}">${esc(o.status[0].toUpperCase()+o.status.slice(1))}</span>`:'')}${kv('Channel',`<span class="pill s${o.store}">${STORES[o.store]}</span>`)}${kv('Source',esc(o.src))}${kv('P.O. #',o.po?hl(o.po,t):'')}${kv('Invoice #',o.inv?hl(o.inv,t):'')}${kv('Customer ref',o.ref?hl(o.ref,t):'')}${kv('Shipping',o.ship?esc(o.ship):'')}</dl></div>
+   </div>
+   <div class="dcol">
+     <div class="dcard"><div class="lbl">Items</div>
+     ${o.items.length?`<div class="tablewrap"><table><thead><tr><th>SKU</th><th>Product</th><th class="r">Price</th><th class="r">Qty</th><th class="r">Total</th></tr></thead><tbody>${items}</tbody><tfoot><tr><td></td><td>Subtotal</td><td></td><td></td><td class="r">${money(sub)}</td></tr>${o.tax?`<tr><td></td><td>Tax</td><td></td><td></td><td class="r">${money(o.tax)}</td></tr>`:''}</tfoot></table></div>`:'<div class="opt">No line items recorded.</div>'}</div>
+     ${o.com?`<div class="dcard"><div class="lbl">Customer note</div><div class="note">${hl(o.com,t)}</div></div>`:''}
+     ${o.notes?`<div class="dcard"><div class="lbl">Internal notes &amp; tracking</div><div class="note">${hl(o.notes,t)}</div></div>`:''}
+   </div></div>`;
+}
+function renderMore(){
+  const t=terms(); const slice=state.res.slice(state.shown,state.shown+PAGE);
+  $('list').insertAdjacentHTML('beforeend',slice.map(o=>rowHTML(o,t)).join(''));
+  state.shown+=slice.length;
+  const left=state.res.length-state.shown;
+  $('more').hidden=left<=0; $('more').textContent=`Show ${Math.min(PAGE,left).toLocaleString()} more (${left.toLocaleString()} left)`;
+}
+$('list').addEventListener('click',e=>{
+  const cb=e.target.closest('.cust-btn');
+  if(cb){state.cust=cb.dataset.cust;state.q='';$('q').value='';$('clear').hidden=true;filter();window.scrollTo({top:0});return}
+  const btn=e.target.closest('.row'); if(!btn) return;
+  const el=btn.parentElement; const i=+el.dataset.i; const o=orders[i];
+  if(open.has(i)){open.delete(i);el.classList.remove('open');btn.setAttribute('aria-expanded','false');el.querySelector('.detail')?.remove();}
+  else{open.add(i);el.classList.add('open');btn.setAttribute('aria-expanded','true');el.insertAdjacentHTML('beforeend',detailHTML(o,terms()));}
+});
+let tm;
+$('q').addEventListener('input',e=>{clearTimeout(tm);$('clear').hidden=!e.target.value;tm=setTimeout(()=>{state.q=e.target.value.trim();filter()},140)});
+$('clear').onclick=()=>{$('q').value='';$('clear').hidden=true;state.q='';filter();$('q').focus()};
+['store','year','sort'].forEach(k=>$(k).addEventListener('change',e=>{state[k]=e.target.value;filter()}));
+$('more').onclick=renderMore;
+filter();
+
+}
+
+const API='shopify:admin/api/2026-10/graphql.json';
+const TYPE='$app:order_archive_chunk';
+const CHUNK_BYTES=120000;
+const el=id=>document.getElementById(id);
+async function gql(query,variables){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,variables:variables||{}})});
+  if(!r.ok) throw new Error('Shopify returned '+r.status+'. Reload the app and try again.');
+  const j=await r.json();
+  if(j.errors) throw new Error(j.errors.map(e=>e.message).join('; '));
+  return j.data;
+}
+function status(t){el('status').hidden=false;el('statusText').textContent=t}
+function showErr(t){el('err').hidden=false;el('err').textContent=t}
+
+async function fetchChunks(){
+  const chunks=[];let after=null;
+  for(;;){
+    const d=await gql(`query($after:String){metaobjects(type:"${TYPE}",first:8,after:$after){nodes{id handle seq:field(key:"seq"){value} data:field(key:"data"){value}} pageInfo{hasNextPage endCursor}}}`,{after});
+    const m=d.metaobjects; chunks.push(...m.nodes);
+    status(`Loading orders from Shopify… (${chunks.length} parts)`);
+    if(!m.pageInfo.hasNextPage) break; after=m.pageInfo.endCursor;
+  }
+  return chunks;
+}
+let started=false;
+async function boot(){
+  if(!window.shopify||window.top===window){status('Open Order Archive from Apps in your Shopify admin.');document.querySelector('.spin').hidden=true;return}
+  try{
+    const chunks=await fetchChunks();
+    if(!chunks.length){el('status').hidden=true;openImporter(false);return}
+    chunks.sort((a,b)=>(+a.seq.value)-(+b.seq.value));
+    const rows=[];for(const c of chunks) rows.push(...JSON.parse(c.data.value));
+    el('gate').hidden=true;el('app').hidden=false;
+    if(!started){started=true;start(rows)}
+  }catch(e){status('Could not load orders: '+e.message);document.querySelector('.spin').hidden=true}
+}
+let fileRows=null;
+function openImporter(cancelable){el('gate').hidden=false;el('app').hidden=true;el('status').hidden=true;el('importer').hidden=false;el('cancelImport').hidden=!cancelable;el('err').hidden=true}
+el('cancelImport').onclick=()=>{el('importer').hidden=true;el('gate').hidden=true;el('app').hidden=false};
+el('manage').onclick=()=>openImporter(true);
+el('file').addEventListener('change',async e=>{
+  fileRows=null;el('doImport').disabled=true;el('err').hidden=true;
+  const f=e.target.files[0];if(!f)return;el('fileLabel').textContent=f.name;
+  try{
+    const rows=JSON.parse(await f.text());
+    if(!Array.isArray(rows)||!rows.length||!rows.every(r=>r&&typeof r==='object'&&'n' in r&&Array.isArray(r.i))) throw new Error('This file is not an Order Archive data file.');
+    fileRows=rows;el('doImport').disabled=false;el('fileLabel').textContent=`${f.name} · ${rows.length.toLocaleString()} orders`;
+  }catch(err){showErr(err.message||'Could not read that file.')}
+});
+async function ensureDefinition(){
+  const d=await gql(`query{metaobjectDefinitionByType(type:"${TYPE}"){id}}`);
+  if(d.metaobjectDefinitionByType) return;
+  const c=await gql(`mutation($def:MetaobjectDefinitionCreateInput!){metaobjectDefinitionCreate(definition:$def){metaobjectDefinition{id} userErrors{field message}}}`,
+    {def:{type:TYPE,name:'Order Archive data',description:'Private ShipStation and OrderSpace order history used by the Order Archive app.',access:{admin:'MERCHANT_READ',storefront:'NONE',customerAccount:'NONE'},
+      fieldDefinitions:[{key:'seq',name:'Part',type:'number_integer'},{key:'data',name:'Orders',type:'json'}]}});
+  const ue=c.metaobjectDefinitionCreate.userErrors;if(ue.length) throw new Error(ue.map(e=>e.message).join('; '));
+}
+function makeChunks(rows){
+  const enc=new TextEncoder();const out=[];let cur=[],size=2;
+  for(const r of rows){const b=enc.encode(JSON.stringify(r)).length+1;if(cur.length&&size+b>CHUNK_BYTES){out.push(cur);cur=[];size=2}cur.push(r);size+=b}
+  if(cur.length) out.push(cur);return out;
+}
+el('doImport').onclick=async()=>{
+  if(!fileRows) return;
+  el('doImport').disabled=true;el('cancelImport').hidden=true;el('file').disabled=true;el('prog').hidden=false;el('err').hidden=true;
+  const setP=(n,t)=>{el('fill').style.width=n+'%';el('progText').textContent=t};
+  try{
+    setP(2,'Preparing private storage in Shopify…');
+    await ensureDefinition();
+    const parts=makeChunks(fileRows);
+    for(let k=0;k<parts.length;k++){
+      const handle='part-'+String(k+1).padStart(3,'0');
+      const r=await gql(`mutation($h:MetaobjectHandleInput!,$m:MetaobjectUpsertInput!){metaobjectUpsert(handle:$h,metaobject:$m){metaobject{id} userErrors{field message}}}`,
+        {h:{type:TYPE,handle},m:{fields:[{key:'seq',value:String(k+1)},{key:'data',value:JSON.stringify(parts[k])}]}});
+      const ue=r.metaobjectUpsert.userErrors;if(ue.length) throw new Error(ue.map(e=>e.message).join('; '));
+      setP(5+Math.round(90*(k+1)/parts.length),`Saved part ${k+1} of ${parts.length}`);
+    }
+    // remove leftover parts from an earlier, larger import
+    const existing=await fetchChunks();
+    for(const c of existing){ if(+c.seq.value>parts.length){ await gql(`mutation($id:ID!){metaobjectDelete(id:$id){deletedId userErrors{message}}}`,{id:c.id}); } }
+    setP(100,`Imported ${fileRows.length.toLocaleString()} orders.`);
+    window.shopify?.toast?.show(`Imported ${fileRows.length.toLocaleString()} orders`);
+    fileRows=null; setTimeout(()=>location.reload(),900);
+  }catch(e){showErr('Import stopped: '+e.message+' Nothing was deleted; run the import again to finish.');el('doImport').disabled=false;el('file').disabled=false}
+};
+
+boot();
+</script>
+</body>
+</html>
