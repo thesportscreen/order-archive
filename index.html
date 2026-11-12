@@ -136,6 +136,48 @@ tfoot td{border-bottom:0;font-weight:650;color:var(--ink)}
 .row-actions{display:flex;gap:8px}
 .err{color:var(--p-bad-fg)!important;background:var(--p-bad);padding:8px 10px;border-radius:8px}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+.tabs{display:inline-flex;background:var(--card);box-shadow:var(--shadow);border-radius:10px;padding:3px;gap:2px;align-self:flex-start}
+.tabs button{border:0;background:none;padding:6px 14px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+.tabs button.on{background:var(--ink);color:var(--bg)}
+.view{display:flex;flex-direction:column;gap:14px}
+#reports{display:flex;flex-direction:column;gap:14px}
+.rscope{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px;align-items:center}
+.rscope b{color:var(--ink)}
+.tog{display:inline-flex;gap:6px;align-items:center;cursor:pointer;color:var(--fg)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi{background:var(--card);box-shadow:var(--shadow);border-radius:12px;padding:12px 14px;min-width:0}
+.kl{font-size:12px;color:var(--muted);font-weight:550}
+.kv2{font-size:20px;white-space:nowrap;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:2px;overflow:hidden;text-overflow:ellipsis}
+.ks{font-size:11.5px;color:var(--subtle);margin-top:2px}
+.rcard{padding:14px;display:flex;flex-direction:column;gap:10px;overflow:visible}
+.rhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.rhead h3{margin:0;font-size:14px;color:var(--ink)}
+.rhead p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.btn.sm{padding:4px 10px;font-size:12px;white-space:nowrap}
+.rgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.rcard,#reports>*{min-width:0}
+.nw{white-space:nowrap}
+.cu{color:var(--muted);font-size:11px}
+.rt td,.rt th{padding:6px 8px}
+.rt td code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.more-rows{align-self:flex-start}
+.linkish{background:none;border:0;padding:0;color:#005BD3;cursor:pointer;font:inherit;text-align:left}
+.linkish:hover{text-decoration:underline}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--fg)}
+.legend span,.tip span{display:inline-flex;align-items:center;gap:6px}
+.legend i,.tip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chart{position:relative;width:100%}
+.chart svg{width:100%;height:260px;display:block;overflow:visible}
+.chart .grid{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.chart .base{stroke:var(--subtle);stroke-width:1;vector-effect:non-scaling-stroke}
+.chart .ax{fill:var(--muted);font-size:11px}
+.chart .hit{fill:transparent;cursor:default}
+.chart .hit.on{fill:rgba(0,0,0,.04)}
+.tip{position:absolute;pointer-events:none;background:var(--card);box-shadow:0 4px 16px rgba(0,0,0,.15),0 0 0 1px var(--line);border-radius:8px;padding:8px 10px;font-size:12px;display:flex;flex-direction:column;gap:3px;min-width:150px;z-index:3;color:var(--fg)}
+.tip b{color:var(--ink)}
+details.tv summary{cursor:pointer;color:var(--muted);font-size:12px}
+.speed{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:var(--p-web);color:var(--p-web-fg);border-radius:10px;padding:8px 12px;font-size:12.5px}
 </style>
 </head>
 <body>
@@ -161,6 +203,8 @@ tfoot td{border-bottom:0;font-weight:650;color:var(--ink)}
     <div class="hdr-r"><div class="stats" id="stats"></div><button class="btn" id="manage">Update data</button></div>
   </header>
 
+  <div class="speed" id="speed" hidden><span id="speedText">Your order history is stored in the original format. Convert it once to make the app open several times faster.</span><button class="btn sm" id="speedBtn">Speed up loading</button></div>
+  <div class="tabs" role="tablist"><button data-view="orders" class="on">Orders</button><button data-view="reports">Reports</button></div>
   <div class="card bar">
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -182,12 +226,15 @@ tfoot td{border-bottom:0;font-weight:650;color:var(--ink)}
     </select>
   </div>
 
+  <div class="view" id="ordersView">
   <div class="card">
     <div class="meta"><div id="count"></div><div id="chips"></div></div>
     <div class="hdr"><span></span><span>Order</span><span>Date paid</span><span>Customer</span><span>Ship to</span><span>Store</span><span class="r">Items</span><span class="r">Total</span></div>
     <div id="list"></div>
   </div>
   <button class="more" id="more" hidden>Show more orders</button>
+  </div>
+  <div id="reports" hidden></div>
   <p class="foot">Compiled from three ShipStation Order Detail exports (Nov 2015 – Apr 2025) and the OrderSpace wholesale export (Oct 2018 – Mar 2025). Wholesale orders that appear in both are shown once, using OrderSpace details plus ShipStation tracking notes. No Shopify orders are included. Stored privately in Shopify — staff only.</p>
 </div>
 
@@ -240,6 +287,7 @@ function filter(){
   $('chips').innerHTML=state.cust?`<span class="chip">Customer: ${esc(r[0]?r[0].name:state.cust)} <button id="xc" aria-label="Clear customer filter">×</button></span>`:'';
   if(state.cust) $('xc').onclick=()=>{state.cust=null;filter()};
   if(!r.length) $('list').innerHTML='<div class="empty">No orders match. Try fewer words, or a postal code, SKU or last name.</div>';
+  if(view==='reports') renderReports();
 }
 const ST={fulfilled:'ok',released:'info',cancelled:'bad',invoiced:'warn'};
 function statusPill(o){return o.status==='cancelled'?`<span class="pill bad">Cancelled</span>`:''}
@@ -299,6 +347,141 @@ $('q').addEventListener('input',e=>{clearTimeout(tm);$('clear').hidden=!e.target
 $('clear').onclick=()=>{$('q').value='';$('clear').hidden=true;state.q='';filter();$('q').focus()};
 ['store','year','sort'].forEach(k=>$(k).addEventListener('change',e=>{state[k]=e.target.value;filter()}));
 $('more').onclick=renderMore;
+// ---------- Reports ----------
+let view='orders';
+const SERIES=['#2a78d6','#1baf7a','#eb6834']; // Website, Wholesale, Manual (validated categorical order)
+const CA={'alberta':'AB','british columbia':'BC','manitoba':'MB','new brunswick':'NB','newfoundland and labrador':'NL','newfoundland':'NL','nova scotia':'NS','ontario':'ON','prince edward island':'PE','quebec':'QC','québec':'QC','saskatchewan':'SK','northwest territories':'NT','nunavut':'NU','yukon':'YT'};
+const US={'alabama':'AL','alaska':'AK','arizona':'AZ','arkansas':'AR','california':'CA','colorado':'CO','connecticut':'CT','delaware':'DE','district of columbia':'DC','florida':'FL','georgia':'GA','hawaii':'HI','idaho':'ID','illinois':'IL','indiana':'IN','iowa':'IA','kansas':'KS','kentucky':'KY','louisiana':'LA','maine':'ME','maryland':'MD','massachusetts':'MA','michigan':'MI','minnesota':'MN','mississippi':'MS','missouri':'MO','montana':'MT','nebraska':'NE','nevada':'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND','ohio':'OH','oklahoma':'OK','oregon':'OR','pennsylvania':'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD','tennessee':'TN','texas':'TX','utah':'UT','vermont':'VT','virginia':'VA','washington':'WA','west virginia':'WV','wisconsin':'WI','wyoming':'WY','puerto rico':'PR'};
+const CAc=new Set(Object.values(CA)),USc=new Set(Object.values(US));
+function region(o){
+  if(o._reg) return o._reg;
+  const a=o.addr; let country='',reg='';
+  const last=(a[a.length-1]||'').trim();
+  if(/^canada$/i.test(last)) country='Canada'; else if(/^(united states|usa)$/i.test(last)) country='United States';
+  else if(/\sCA$/.test(last)) country='Canada'; else if(/\sUS$/.test(last)) country='United States';
+  else if(last && !/\d/.test(last) && a.length>1) country=last;
+  const line=(country&&/^[A-Za-z .]+$/.test(last)&&a.length>1)?a[a.length-2]:last;
+  const m=line.match(/,\s*([A-Za-zÀ-ÿ .]+?)\s+[A-Z0-9]{3}\s?[A-Z0-9]{3}\b|,\s*([A-Za-zÀ-ÿ .]+?)\s+\d{5}(-\d{4})?\b|,\s*([A-Za-zÀ-ÿ .]+?)\s*$/);
+  let s=m?(m[1]||m[2]||m[4]||'').trim():'';
+  const low=s.toLowerCase();
+  if(CA[low]) {reg=CA[low];country=country||'Canada'} else if(US[low]) {reg=US[low];country=country||'United States'}
+  else if(/^[A-Z]{2}$/.test(s.toUpperCase())&&(CAc.has(s.toUpperCase())||USc.has(s.toUpperCase()))){reg=s.toUpperCase();if(!country)country=CAc.has(reg)&&!USc.has(reg)?'Canada':(USc.has(reg)&&!CAc.has(reg)?'United States':'')}
+  if(country==='Canada'&&reg&&!CAc.has(reg)) reg=''; if(country==='United States'&&reg&&!USc.has(reg)) reg='';
+  return o._reg={country:country||'Unknown',reg};
+}
+const isDisc=it=>it[0]==='total-discount'||(+it[4]<0)||/discount/i.test(it[1]||'')&&(+it[4]<=0);
+const curOf=o=>o.cur||'n/r';
+function moneyBy(m){const ks=Object.keys(m).filter(k=>Math.abs(m[k])>0.004);if(!ks.length)return '—';return ['CAD','USD','n/r'].filter(k=>ks.includes(k)).map(k=>`<div class="nw">${money(m[k])} <span class="cu">${k==='n/r'?'n/r':k}</span></div>`).join('')}
+function csv(rows){return rows.map(r=>r.map(v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n')}
+function download(name,rows){
+  const blob=new Blob(['﻿'+csv(rows)],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+const tables={};
+const rowHtml=(r,fmt)=>`<tr>${r.map((v,i)=>`<td class="${fmt[i]==='n'||fmt[i]==='m'?'r':''}${fmt[i]==='d'?' nw':''}">${fmt[i]==='h'||fmt[i]==='m'?v:esc(v)}</td>`).join('')}</tr>`;
+function tableCard(id,title,sub,head,rows,fmt,limit){
+  tables[id]={head,rows,title,fmt};
+  const lim=limit||15;
+  return `<div class="card rcard" data-t="${id}"><div class="rhead"><div><h3>${title}</h3>${sub?`<p>${sub}</p>`:''}</div><button class="btn sm" data-dl="${id}">Download CSV</button></div>
+  <div class="tablewrap"><table class="rt"><thead><tr>${head.map((h,i)=>`<th class="${fmt[i]==='n'||fmt[i]==='m'?'r':''}">${h}</th>`).join('')}</tr></thead><tbody>
+  ${rows.slice(0,lim).map(r=>rowHtml(r,fmt)).join('')||`<tr><td colspan="${head.length}" class="opt">No data for these filters.</td></tr>`}
+  </tbody></table></div>${rows.length>lim?`<button class="btn sm more-rows" data-more="${id}">Show all ${rows.length.toLocaleString()}</button>`:''}</div>`;
+}
+function renderReports(){
+  const inc0=$('inc0')?$('inc0').checked:false;
+  const all=state.res;
+  const live=all.filter(o=>o.status!=='cancelled'&&(inc0||(+o.paid||0)>0));
+  const cancelled=all.filter(o=>o.status==='cancelled').length;
+  const zero=all.filter(o=>o.status!=='cancelled'&&!((+o.paid||0)>0)).length;
+  const sales={};let units=0;
+  live.forEach(o=>{const c=curOf(o);sales[c]=(sales[c]||0)+(+o.paid||0);o.items.forEach(it=>{if(!isDisc(it))units+=(+it[3]||0)})});
+  const custs=new Set(live.map(o=>o.name.toLowerCase().trim()));
+  const kpi=(l,v,s)=>`<div class="kpi"><div class="kl">${l}</div><div class="kv2">${v}</div>${s?`<div class="ks">${s}</div>`:''}</div>`;
+  const salesTiles=['CAD','USD','n/r'].filter(c=>sales[c]).map(c=>kpi(c==='n/r'?'Sales · currency not recorded':'Sales · '+c,'$'+Math.round(sales[c]).toLocaleString('en-US'),c==='n/r'?'Website & manual orders from ShipStation':'')).join('');
+  // time series
+  const byMonth=state.year!=='';
+  const buckets=byMonth?['01','02','03','04','05','06','07','08','09','10','11','12']:[...new Set(live.map(o=>o.yr).filter(Boolean))].sort();
+  const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const lab=b=>byMonth?MN[+b-1]:b;
+  const series=[0,1,2].map(s=>buckets.map(b=>live.filter(o=>o.store===s&&(byMonth?o.date.slice(5,7)===b:o.yr===b)).length));
+  const present=[0,1,2].filter(s=>series[s].some(v=>v>0));
+  const totals=buckets.map((b,i)=>present.reduce((t,s)=>t+series[s][i],0));
+  const chart=barChart(buckets.map(lab),present.map(s=>({name:STORES[s],color:SERIES[s],vals:series[s]})),totals);
+  const tsRows=buckets.map((b,i)=>[lab(b)+(byMonth?' '+state.year:''),...present.map(s=>series[s][i]),totals[i]]);
+  tables.ts={head:[byMonth?'Month':'Year',...present.map(s=>STORES[s]),'Total'],rows:tsRows};
+  // products
+  const pm=new Map();
+  live.forEach(o=>{const seen=new Set();o.items.forEach(it=>{if(isDisc(it))return;const sku=(it[0]||'').trim();const key=(sku||it[1]||'').toUpperCase();if(!key)return;let p=pm.get(key);if(!p){p={sku,titles:{},units:0,orders:0,sales:{}};pm.set(key,p)}p.titles[it[1]]=(p.titles[it[1]]||0)+1;p.units+=(+it[3]||0);const c=curOf(o);p.sales[c]=(p.sales[c]||0)+(+it[4]||0);if(!seen.has(key)){p.orders++;seen.add(key)}})});
+  const prods=[...pm.values()].map(p=>({...p,title:Object.entries(p.titles).sort((a,b)=>b[1]-a[1])[0][0]})).sort((a,b)=>b.units-a.units);
+  // customers
+  const cm=new Map();
+  live.forEach(o=>{const k=o.name.toLowerCase().trim();if(!k)return;let c=cm.get(k);if(!c){c={name:o.name,orders:0,units:0,sales:{},first:o.date,last:o.date,ch:new Set(),email:''};cm.set(k,c)}c.orders++;c.ch.add(STORES[o.store]);const cu=curOf(o);c.sales[cu]=(c.sales[cu]||0)+(+o.paid||0);if(o.date&&o.date<c.first)c.first=o.date;if(o.date>c.last)c.last=o.date;if(!c.email&&o.email)c.email=o.email;o.items.forEach(it=>{if(!isDisc(it))c.units+=(+it[3]||0)})});
+  const custRows=[...cm.values()].sort((a,b)=>b.orders-a.orders||b.units-a.units);
+  // regions
+  const rm=new Map();
+  live.forEach(o=>{const g=region(o);const k=g.country+'|'+(g.reg||'—');let r=rm.get(k);if(!r){r={country:g.country,reg:g.reg||'—',orders:0,units:0};rm.set(k,r)}r.orders++;o.items.forEach(it=>{if(!isDisc(it))r.units+=(+it[3]||0)})});
+  const regRows=[...rm.values()].sort((a,b)=>b.orders-a.orders);
+  const scope=[state.store!==''?STORES[+state.store]:'All stores',state.year||'All years',state.q?`matching “${esc(state.q)}”`:'',state.cust?'one customer':''].filter(Boolean).join(' · ');
+  $('reports').innerHTML=`
+  <div class="rscope"><span>Showing <b>${scope}</b>. Reports use the same search and filters as the order list.</span>
+   <label class="tog"><input type="checkbox" id="inc0" ${inc0?'checked':''}> Include $0 orders (replacements, warranty)</label></div>
+  <div class="kpis">${kpi('Orders',live.length.toLocaleString(),[cancelled?cancelled+' cancelled not counted':'',!inc0&&zero?zero.toLocaleString()+' $0 orders hidden':''].filter(Boolean).join(' · '))}${kpi('Units sold',units.toLocaleString())}${kpi('Customers',custs.size.toLocaleString())}${salesTiles}</div>
+  <div class="card rcard"><div class="rhead"><div><h3>Orders by ${byMonth?'month, '+state.year:'year'}</h3><p>Split by store. Hover a bar for exact counts.</p></div><button class="btn sm" data-dl="ts">Download CSV</button></div>
+   <div class="legend">${present.map(s=>`<span><i style="background:${SERIES[s]}"></i>${STORES[s]}</span>`).join('')}</div>${chart}
+   <details class="tv"><summary>View as table</summary><div class="tablewrap"><table class="rt"><thead><tr>${tables.ts.head.map((h,i)=>`<th class="${i?'r':''}">${h}</th>`).join('')}</tr></thead><tbody>${tsRows.map(r=>`<tr>${r.map((v,i)=>`<td class="${i?'r':''}">${typeof v==='number'?v.toLocaleString():esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details></div>
+  <div class="rgrid">
+  ${tableCard('prod','Top products','Ranked by units sold. Sales are line totals before tax, by order currency (n/r = currency not recorded).',['SKU','Product','Units','Orders','Sales'],
+    prods.map(p=>[p.sku?`<code>${esc(p.sku)}</code>`:'—',esc(p.title),p.units.toLocaleString(),p.orders.toLocaleString(),moneyBy(p.sales)]),['h','h','n','n','m'])}
+  ${tableCard('cust','Top customers','Ranked by number of orders.',['Customer','Store','Orders','Units','Sales','Last order'],
+    custRows.map(c=>[`<button class="linkish" data-cust="${esc(c.name.toLowerCase().trim())}">${esc(c.name)}</button>`,esc([...c.ch].join(', ')),c.orders.toLocaleString(),c.units.toLocaleString(),moneyBy(c.sales),fmtDate(c.last)]),['h','h','n','n','m','d'])}
+  ${tableCard('reg','Orders by region','Province or state from the shipping address.',['Country','Province / state','Orders','Units'],
+    regRows.map(r=>[r.country,r.reg,r.orders.toLocaleString(),r.units.toLocaleString()]),['t','t','n','n'])}
+  </div>`;
+  // csv sources (plain values)
+  tables.prod.csv=[['SKU','Product','Units','Orders','Sales CAD','Sales USD','Sales (currency not recorded)'],...prods.map(p=>[p.sku,p.title,p.units,p.orders,(p.sales.CAD||0).toFixed(2),(p.sales.USD||0).toFixed(2),(p.sales['n/r']||0).toFixed(2)])];
+  tables.cust.csv=[['Customer','Email','Stores','Orders','Units','Sales CAD','Sales USD','Sales (currency not recorded)','First order','Last order'],...custRows.map(c=>[c.name,c.email,[...c.ch].join('; '),c.orders,c.units,(c.sales.CAD||0).toFixed(2),(c.sales.USD||0).toFixed(2),(c.sales['n/r']||0).toFixed(2),(c.first||'').slice(0,10),(c.last||'').slice(0,10)])];
+  tables.reg.csv=[['Country','Province/State','Orders','Units'],...regRows.map(r=>[r.country,r.reg,r.orders,r.units])];
+  tables.ts.csv=[tables.ts.head,...tsRows];
+  $('inc0').onchange=renderReports;
+  wireChart();
+}
+function barChart(labels,ser,totals){
+  const W=1000,H=260,pl=44,pr=8,pt=12,pb=28; const n=labels.length||1;
+  const max=Math.max(1,...totals); const step=niceStep(max); const top=Math.ceil(max/step)*step;
+  const y=v=>pt+(H-pt-pb)*(1-v/top); const bw=(W-pl-pr)/n; const barW=Math.max(6,Math.min(48,bw*0.62));
+  let g='';
+  for(let v=0;v<=top;v+=step){g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" class="grid"/><text x="${pl-8}" y="${y(v)+4}" class="ax" text-anchor="end">${v.toLocaleString()}</text>`}
+  let bars='';
+  labels.forEach((l,i)=>{
+    const x=pl+bw*i+(bw-barW)/2; let acc=0; const segs=ser.map(s=>({name:s.name,color:s.color,v:s.vals[i]})).filter(s=>s.v>0);
+    segs.forEach((s,k)=>{const y0=y(acc),y1=y(acc+s.v);const h=Math.max(0,y0-y1-(k<segs.length-1?2:0));const topSeg=k===segs.length-1;
+      bars+=topSeg?`<path d="M${x},${y0} V${y1+Math.min(4,h)} Q${x},${y0-h} ${x+Math.min(4,barW/2)},${y0-h} H${x+barW-Math.min(4,barW/2)} Q${x+barW},${y0-h} ${x+barW},${y1+Math.min(4,h)} V${y0} Z" fill="${s.color}"/>`:`<rect x="${x}" y="${y0-h}" width="${barW}" height="${h}" fill="${s.color}"/>`;acc+=s.v});
+    const tip=[`<b>${esc(l)}</b>`,...segs.slice().reverse().map(s=>`<span><i style="background:${s.color}"></i>${s.name}: ${s.v.toLocaleString()}</span>`),`<span>Total: ${totals[i].toLocaleString()}</span>`].join('');
+    bars+=`<rect x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}" class="hit" data-tip="${esc(tip)}"/>`;
+    if(n<=16||i%Math.ceil(n/16)===0) bars+=`<text x="${x+barW/2}" y="${H-8}" class="ax" text-anchor="middle">${esc(l)}</text>`;
+  });
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Orders by period, stacked by store">${g}<line x1="${pl}" x2="${W-pr}" y1="${y(0)}" y2="${y(0)}" class="base"/>${bars}</svg><div class="tip" id="tip" hidden></div></div>`;
+}
+function niceStep(max){const raw=max/4;const p=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p}
+function wireChart(){
+  const c=document.querySelector('#reports .chart');if(!c)return;const tip=c.querySelector('#tip');
+  c.querySelectorAll('.hit').forEach(h=>{
+    h.addEventListener('mouseenter',()=>{h.classList.add('on');tip.innerHTML=h.dataset.tip;tip.hidden=false});
+    h.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();let x=e.clientX-r.left+12;if(x+180>r.width)x=e.clientX-r.left-190;tip.style.left=x+'px';tip.style.top=Math.max(0,e.clientY-r.top-20)+'px'});
+    h.addEventListener('mouseleave',()=>{h.classList.remove('on');tip.hidden=true});
+  });
+}
+$('reports').addEventListener('click',e=>{
+  const dl=e.target.closest('[data-dl]');if(dl){const t=tables[dl.dataset.dl];const nm={ts:'orders-by-period',prod:'top-products',cust:'top-customers',reg:'orders-by-region'}[dl.dataset.dl];download(`order-archive-${nm}.csv`,t.csv);return}
+  const mr=e.target.closest('[data-more]');if(mr){const id=mr.dataset.more;const card=mr.closest('.rcard');const t=tables[id];const tb=card.querySelector('tbody');
+    tb.innerHTML=t.rows.map(r=>rowHtml(r,t.fmt)).join('');mr.remove();return}
+  const cb=e.target.closest('[data-cust]');if(cb){state.cust=cb.dataset.cust;state.q='';$('q').value='';$('clear').hidden=true;setView('orders');filter();window.scrollTo({top:0})}
+});
+function setView(v){view=v;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  $('ordersView').hidden=v!=='orders';$('reports').hidden=v!=='reports';$('sort').hidden=v!=='orders';if(v==='reports')renderReports()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+
 filter();
 
 }
@@ -317,25 +500,39 @@ async function gql(query,variables){
 function status(t){el('status').hidden=false;el('statusText').textContent=t}
 function showErr(t){el('err').hidden=false;el('err').textContent=t}
 
-async function fetchChunks(){
+async function fetchChunks(onPage){
   const chunks=[];let after=null;
   for(;;){
-    const d=await gql(`query($after:String){metaobjects(type:"${TYPE}",first:8,after:$after){nodes{id handle seq:field(key:"seq"){value} data:field(key:"data"){value}} pageInfo{hasNextPage endCursor}}}`,{after});
-    const m=d.metaobjects; chunks.push(...m.nodes);
-    status(`Loading orders from Shopify… (${chunks.length} parts)`);
+    const d=await gql(`query($after:String){metaobjects(type:"${TYPE}",first:50,after:$after){nodes{id handle seq:field(key:"seq"){value} data:field(key:"data"){value}} pageInfo{hasNextPage endCursor}}}`,{after});
+    const m=d.metaobjects; chunks.push(...m.nodes); if(onPage) onPage(chunks.length);
     if(!m.pageInfo.hasNextPage) break; after=m.pageInfo.endCursor;
   }
   return chunks;
 }
-let started=false;
+async function gz(str){const st=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));const buf=new Uint8Array(await new Response(st).arrayBuffer());let bin='';for(let i=0;i<buf.length;i+=0x8000)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));return btoa(bin)}
+async function gunz(b64){const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));return new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text()}
+// Storage formats: compressed parts {z,id,k,n} (current) or plain arrays of orders (first version).
+async function decode(chunks){
+  const parsed=chunks.map(c=>{let v=null;try{v=JSON.parse(c.data.value)}catch(e){}return {c,v}});
+  const sets={};
+  parsed.forEach(p=>{if(p.v&&!Array.isArray(p.v)&&p.v.z&&p.v.id){(sets[p.v.id]=sets[p.v.id]||[]).push(p.v)}});
+  const ids=Object.keys(sets).filter(id=>{const ps=sets[id];const n=ps[0].n;return ps.length===n&&new Set(ps.map(x=>x.k)).size===n}).sort().reverse();
+  if(ids.length){const ps=sets[ids[0]].sort((x,y)=>x.k-y.k);return {rows:JSON.parse(await gunz(ps.map(x=>x.z).join(''))),compressed:true,keep:ids[0]}}
+  const arr=parsed.filter(p=>Array.isArray(p.v)).sort((x,y)=>(+x.c.seq.value)-(+y.c.seq.value));
+  const rows=[];arr.forEach(p=>rows.push(...p.v));return {rows,compressed:false};
+}
+let started=false,loadedRows=null;
 async function boot(){
   if(!window.shopify||window.top===window){status('Open Order Archive from Apps in your Shopify admin.');document.querySelector('.spin').hidden=true;return}
   try{
-    const chunks=await fetchChunks();
+    const chunks=await fetchChunks(n=>status(`Loading orders from Shopify… (${n} parts)`));
     if(!chunks.length){el('status').hidden=true;openImporter(false);return}
-    chunks.sort((a,b)=>(+a.seq.value)-(+b.seq.value));
-    const rows=[];for(const c of chunks) rows.push(...JSON.parse(c.data.value));
+    status('Preparing orders…');
+    const {rows,compressed}=await decode(chunks);
+    if(!rows.length){el('status').hidden=true;openImporter(false);return}
+    loadedRows=rows;
     el('gate').hidden=true;el('app').hidden=false;
+    if(!compressed){el('speed').hidden=false}
     if(!started){started=true;start(rows)}
   }catch(e){status('Could not load orders: '+e.message);document.querySelector('.spin').hidden=true}
 }
@@ -360,33 +557,41 @@ async function ensureDefinition(){
       fieldDefinitions:[{key:'seq',name:'Part',type:'number_integer'},{key:'data',name:'Orders',type:'json'}]}});
   const ue=c.metaobjectDefinitionCreate.userErrors;if(ue.length) throw new Error(ue.map(e=>e.message).join('; '));
 }
-function makeChunks(rows){
-  const enc=new TextEncoder();const out=[];let cur=[],size=2;
-  for(const r of rows){const b=enc.encode(JSON.stringify(r)).length+1;if(cur.length&&size+b>CHUNK_BYTES){out.push(cur);cur=[];size=2}cur.push(r);size+=b}
-  if(cur.length) out.push(cur);return out;
+async function saveRows(rows,setP){
+  setP(2,'Preparing private storage in Shopify…');
+  await ensureDefinition();
+  setP(6,'Compressing orders…');
+  const b64=await gz(JSON.stringify(rows));
+  const PART=CHUNK_BYTES; const n=Math.ceil(b64.length/PART); const id=String(Date.now());
+  for(let k=0;k<n;k++){
+    const handle='z-'+id+'-'+String(k+1).padStart(3,'0');
+    const val=JSON.stringify({z:b64.slice(k*PART,(k+1)*PART),id,k,n});
+    const r=await gql(`mutation($h:MetaobjectHandleInput!,$m:MetaobjectUpsertInput!){metaobjectUpsert(handle:$h,metaobject:$m){metaobject{id} userErrors{field message}}}`,
+      {h:{type:TYPE,handle},m:{fields:[{key:'seq',value:String(k+1)},{key:'data',value:val}]}});
+    const ue=r.metaobjectUpsert.userErrors;if(ue.length) throw new Error(ue.map(e=>e.message).join('; '));
+    setP(10+Math.round(80*(k+1)/n),`Saved part ${k+1} of ${n}`);
+  }
+  // Only after the new set is fully saved: remove every older part (old format or older saves).
+  setP(92,'Cleaning up older copies…');
+  const existing=await fetchChunks();
+  for(const c of existing){let v=null;try{v=JSON.parse(c.data.value)}catch(e){}
+    if(!(v&&v.id===id)) await gql(`mutation($id:ID!){metaobjectDelete(id:$id){deletedId userErrors{message}}}`,{id:c.id});}
+  setP(100,`Saved ${rows.length.toLocaleString()} orders.`);
 }
 el('doImport').onclick=async()=>{
   if(!fileRows) return;
   el('doImport').disabled=true;el('cancelImport').hidden=true;el('file').disabled=true;el('prog').hidden=false;el('err').hidden=true;
   const setP=(n,t)=>{el('fill').style.width=n+'%';el('progText').textContent=t};
   try{
-    setP(2,'Preparing private storage in Shopify…');
-    await ensureDefinition();
-    const parts=makeChunks(fileRows);
-    for(let k=0;k<parts.length;k++){
-      const handle='part-'+String(k+1).padStart(3,'0');
-      const r=await gql(`mutation($h:MetaobjectHandleInput!,$m:MetaobjectUpsertInput!){metaobjectUpsert(handle:$h,metaobject:$m){metaobject{id} userErrors{field message}}}`,
-        {h:{type:TYPE,handle},m:{fields:[{key:'seq',value:String(k+1)},{key:'data',value:JSON.stringify(parts[k])}]}});
-      const ue=r.metaobjectUpsert.userErrors;if(ue.length) throw new Error(ue.map(e=>e.message).join('; '));
-      setP(5+Math.round(90*(k+1)/parts.length),`Saved part ${k+1} of ${parts.length}`);
-    }
-    // remove leftover parts from an earlier, larger import
-    const existing=await fetchChunks();
-    for(const c of existing){ if(+c.seq.value>parts.length){ await gql(`mutation($id:ID!){metaobjectDelete(id:$id){deletedId userErrors{message}}}`,{id:c.id}); } }
-    setP(100,`Imported ${fileRows.length.toLocaleString()} orders.`);
+    await saveRows(fileRows,setP);
     window.shopify?.toast?.show(`Imported ${fileRows.length.toLocaleString()} orders`);
     fileRows=null; setTimeout(()=>location.reload(),900);
-  }catch(e){showErr('Import stopped: '+e.message+' Nothing was deleted; run the import again to finish.');el('doImport').disabled=false;el('file').disabled=false}
+  }catch(e){showErr('Import stopped: '+e.message+' Your previous data is still in place; run the import again to finish.');el('doImport').disabled=false;el('file').disabled=false}
+};
+el('speedBtn').onclick=async()=>{
+  if(!loadedRows) return; const b=el('speedBtn'); b.disabled=true;
+  try{ await saveRows(loadedRows,(n,t)=>{el('speedText').textContent=t}); window.shopify?.toast?.show('Loading is now faster'); el('speed').hidden=true; }
+  catch(e){ el('speedText').textContent='Could not finish: '+e.message+' Your data is unchanged.'; b.disabled=false; }
 };
 
 boot();
